@@ -1,0 +1,6 @@
+--indent 4
+--maxwidth 120
+--trailingclosures all
+--enable isEmpty
+--disable redundantSelf
+--disable strongOutlets
