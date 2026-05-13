@@ -8,6 +8,12 @@ struct ContentView: View {
             DropZoneView(viewModel: viewModel)
                 .padding()
 
+            if !viewModel.recentFiles.isEmpty {
+                recentFilesSection
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+            }
+
             Divider()
 
             SettingsPanel(config: $viewModel.config)
@@ -38,11 +44,29 @@ struct ContentView: View {
                     Button("Open in Books") {
                         viewModel.openInBooks()
                     }
-                    .keyboardShortcut(.defaultAction)
+                    .keyboardShortcut("b", modifiers: .command)
                 }
             }
             .padding()
         }
         .background(Color(.windowBackgroundColor))
+    }
+
+    private var recentFilesSection: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Recent")
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            ForEach(viewModel.recentFiles, id: \.path) { url in
+                Button(url.lastPathComponent) {
+                    viewModel.openRecentFile(url)
+                }
+                .buttonStyle(.link)
+                .font(.caption)
+                .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

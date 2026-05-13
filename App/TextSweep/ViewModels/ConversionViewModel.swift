@@ -11,6 +11,8 @@ final class ConversionViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var config = BionicConfigViewModel()
 
+    @AppStorage("recentFilePaths") private var recentFilePathsJSON: String = "[]"
+
     private var selectedURL: URL?
     private let extractor: EPUBExtracting = EPUBExtractor()
     private let transformer: BionicTransforming = BionicTransformer()
@@ -20,6 +22,15 @@ final class ConversionViewModel: ObservableObject {
         ?? UTType("org.idpf.epub-container")
         ?? .data
 
+    var recentFiles: [URL] {
+        guard let data = recentFilePathsJSON.data(using: .utf8),
+              let paths = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return paths.compactMap { URL(fileURLWithPath: $0) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
     func selectFile() {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [Self.epubUTType]
@@ -27,6 +38,11 @@ final class ConversionViewModel: ObservableObject {
         panel.canChooseDirectories = false
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
+        setSelectedFile(url)
+        addToRecentFiles(url)
+    }
+
+    func openRecentFile(_ url: URL) {
         setSelectedFile(url)
     }
 
@@ -50,6 +66,7 @@ final class ConversionViewModel: ObservableObject {
 
             Task { @MainActor in
                 self?.setSelectedFile(url.resolvingSymlinksInPath())
+                self?.addToRecentFiles(url.resolvingSymlinksInPath())
             }
         }
     }
@@ -115,5 +132,16 @@ final class ConversionViewModel: ObservableObject {
         selectedFilename = url.lastPathComponent
         errorMessage = nil
         outputURL = nil
+    }
+
+    private func addToRecentFiles(_ url: URL) {
+        var files = recentFiles.map(\.path)
+        files.removeAll { $0 == url.path }
+        files.insert(url.path, at: 0)
+        files = Array(files.prefix(10))
+        if let data = try? JSONEncoder().encode(files),
+           let json = String(data: data, encoding: .utf8) {
+            recentFilePathsJSON = json
+        }
     }
 }

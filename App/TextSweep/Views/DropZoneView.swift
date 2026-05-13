@@ -31,6 +31,7 @@ struct DropZoneView: View {
                         viewModel.convert()
                     }
                     .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
                     .disabled(viewModel.isConverting)
                 } else {
                     Image(systemName: "arrow.down.doc")
@@ -45,6 +46,7 @@ struct DropZoneView: View {
                     Button("Select File...") {
                         viewModel.selectFile()
                     }
+                    .keyboardShortcut("o")
                     .padding(.top, 4)
                 }
             }
